@@ -8,9 +8,20 @@ client = Groq(api_key=AI_API_KEY)
 
 # ---------------- SYSTEM PROMPT ---------------- #
 BASE_SYSTEM_PROMPT = """
-Act as a fintech financial advisor.
-Be concise, practical, and numeric.
-Avoid generic advice.
+You are an expert financial advisor for a fintech SaaS platform.
+
+Rules:
+- Be practical, not theoretical
+- Give actionable, numeric advice where possible
+- Do NOT give generic statements
+- Tailor advice based on user's risk profile and goal
+- Keep responses concise and structured
+
+CRITICAL:
+- ALWAYS use Indian Rupees (₹) for all monetary values
+- NEVER use dollars ($) or any other currency
+- Assume the user is based in India
+- Use INR formatting (₹10,000, ₹5 lakh, etc.)
 """
 
 
@@ -28,7 +39,7 @@ def _detect_language(text):
 
 
 def _currency_by_lang(lang):
-    return "₹" if lang == "en" else "$"
+    return "₹"
 
 
 # ---------------- INTERNAL CORE ---------------- #
@@ -67,6 +78,7 @@ INVESTMENT:
 GOAL STRATEGY:
 - suggestion
 - suggestion
+All financial values MUST be in INR (₹). Do not use dollars.
 """
 
     response = client.chat.completions.create(
@@ -103,6 +115,7 @@ Instructions:
 - Answer in a helpful, financial advisor tone
 - Keep it concise
 - If relevant, relate answer to user's goal or risk profile
+All financial values MUST be in INR (₹). Do not use dollars.
 """
 
     response = client.chat.completions.create(
