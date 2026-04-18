@@ -256,7 +256,7 @@ streamlit run app.py
 
 ## Author
 
-**Pranav**
+# *Pranav Raj Choudhary*
 
 Built with a focus on:
 
