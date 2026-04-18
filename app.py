@@ -165,7 +165,7 @@ def logout():
 
 # ---------------- SIDEBAR AUTH ---------------- #
 # ---------------- SIDEBAR AUTH ---------------- #
-st.sidebar.title("Account")
+st.sidebar.title("FinAIzer")
 
 if not st.session_state.user:
     mode = st.sidebar.radio("Mode", ["Login", "Signup"])
@@ -219,7 +219,7 @@ else:
 
 
 if not st.session_state.user:
-    st.title("Login required")
+    st.title("FinAIzer | Login required")
     st.stop()
 
 
