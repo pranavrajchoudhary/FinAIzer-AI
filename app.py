@@ -241,7 +241,7 @@ if not profile_doc.exists:
             "age_group": age_group,
             "risk": risk,
             "goal": goal,
-            "created_at": datetime.now(timezone.now)
+            "created_at": datetime.now(timezone.utc)
         })
         st.rerun()
 
