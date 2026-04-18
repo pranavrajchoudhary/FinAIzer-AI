@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-import datetime
+
 import pandas as pd
 from io import BytesIO
 from reportlab.platypus import Table, TableStyle
@@ -20,7 +20,7 @@ from config import APP_TITLE, db
 from firebase_admin import auth
 
 import random
-from datetime import date
+from datetime import datetime, timezone
 
 
 def get_daily_thought():
@@ -241,7 +241,7 @@ if not profile_doc.exists:
             "age_group": age_group,
             "risk": risk,
             "goal": goal,
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc)
         })
         st.rerun()
 
@@ -251,7 +251,7 @@ profile = profile_doc.to_dict()
 
 
 # ---------------- UI ---------------- #
-from datetime import datetime
+ 
 
 # Greeting logic
 hour = datetime.now().hour
@@ -315,7 +315,7 @@ with col_main:
                 "expenses": expenses,
                 "savings": savings,
                 "debt": debt,
-                "timestamp": datetime.utcnow()
+                "timestamp": datetime.utc(timezone.utc)
             })
 
             # -------- INTELLIGENCE LAYER -------- #
@@ -366,7 +366,11 @@ with col_main:
                 "goal": profile["goal"]
             }
 
-            advice = generate_financial_advice(data)
+            try:
+                advice = generate_financial_advice(data)
+            except Exception:
+                st.error("AI service unavailable. Try again later.")
+                advice = ""
             sections = parse_advice(advice)
             if not any(v.strip() for v in sections.values()):
                 st.error("AI response format issue. Retrying...")
@@ -445,8 +449,11 @@ st.subheader("Assistant")
 user_input = st.chat_input("Ask a financial question")
 
 if user_input:
-    reply = finance_chatbot_response(user_input, profile)
-
+    try:
+        reply = finance_chatbot_response(user_input, profile)
+    except Exception:
+        reply = "AI is temporarily unavailable."
+ 
     st.session_state.chat_history.append(("user", user_input))
     st.session_state.chat_history.append(("ai", reply))
 
