@@ -3,7 +3,8 @@ import json
 import firebase_admin
 from firebase_admin import credentials, firestore
 import base64
-
+ 
+APP_TITLE = "FinAIzer - AI Financial Advisor"
 # ---------------- AI KEY ---------------- #
 try:
     AI_API_KEY = st.secrets["AI_API_KEY"]
