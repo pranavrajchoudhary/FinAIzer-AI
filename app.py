@@ -38,7 +38,7 @@ def get_daily_thought():
     ]
 
     # stable random per day
-    today = date.today().toordinal()
+    today = datetime.now().toordinal()
     return thoughts[today % len(thoughts)]
 # ---------------- CONFIG ---------------- #
 FIREBASE_API_KEY = st.secrets["FIREBASE_API_KEY"]
@@ -241,7 +241,7 @@ if not profile_doc.exists:
             "age_group": age_group,
             "risk": risk,
             "goal": goal,
-            "created_at": datetime.now(timezone.utc)
+            "created_at": datetime.now(timezone.now)
         })
         st.rerun()
 
@@ -294,107 +294,113 @@ with col_main:
         st.session_state.analyze_loading = True
 
         # -------- RATE LIMIT -------- #
-        now = time.time()
-        if now - st.session_state.last_ai_call < 3:
-            st.warning("Please wait before running analysis again.")
-            st.stop()
+        try:
+            now = time.time()
+            if now - st.session_state.last_ai_call < 3:
+                st.warning("Please wait before running analysis again.")
+                st.stop()
 
-        st.session_state.last_ai_call = now
+            st.session_state.last_ai_call = now
 
-        if income <= 0 or expenses <= 0:
-            st.warning("Enter valid values")
-        else:
-            savings_r = savings_ratio(income, savings)
-            debt_r = debt_ratio(income, debt)
-            invest = investment_potential(income, expenses)
-            emergency = emergency_fund_required(expenses)
-            score = financial_health_score(savings_r, debt_r)
+            if income <= 0 or expenses <= 0:
+                st.warning("Enter valid values")
+            else:
+                savings_r = savings_ratio(income, savings)
+                debt_r = debt_ratio(income, debt)
+                invest = investment_potential(income, expenses)
+                emergency = emergency_fund_required(expenses)
+                score = financial_health_score(savings_r, debt_r)
 
-            user_ref.collection("data").add({
-                "income": income,
-                "expenses": expenses,
-                "savings": savings,
-                "debt": debt,
-                "timestamp": datetime.utc(timezone.utc)
-            })
+                user_ref.collection("data").add({
+                    "income": income,
+                    "expenses": expenses,
+                    "savings": savings,
+                    "debt": debt,
+                    "timestamp": datetime.now(timezone.utc)
+                })
 
-            # -------- INTELLIGENCE LAYER -------- #
-            if expenses > income:
-                st.error("Spending exceeds income. Immediate correction needed.")
+                # -------- INTELLIGENCE LAYER -------- #
+                if expenses > income:
+                    st.error("Spending exceeds income. Immediate correction needed.")
 
-            if debt_r > 40:
-                st.warning("High debt ratio detected. Consider reducing liabilities.")
+                if debt_r > 40:
+                    st.warning("High debt ratio detected. Consider reducing liabilities.")
 
-            if savings_r < 10:
-                st.warning("Savings rate is low. Increase savings for stability.")
+                if savings_r < 10:
+                    st.warning("Savings rate is low. Increase savings for stability.")
 
-            if savings_r > 30:
-                st.success("Strong savings discipline. Good financial behavior.")
+                if savings_r > 30:
+                    st.success("Strong savings discipline. Good financial behavior.")
 
-            # -------- EXISTING UI -------- #
-            st.subheader("Overview")
+                # -------- EXISTING UI -------- #
+                st.subheader("Overview")
 
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Savings Ratio", f"{savings_r:.2f}%")
-            m2.metric("Debt Ratio", f"{debt_r:.2f}%")
-            m3.metric("Investment Potential", f"{invest:,.0f}")
-            m4.metric("Emergency Fund", f"{emergency:,.0f}")
+                m1, m2, m3, m4 = st.columns(4)
+                m1.metric("Savings Ratio", f"{savings_r:.2f}%")
+                m2.metric("Debt Ratio", f"{debt_r:.2f}%")
+                m3.metric("Investment Potential", f"{invest:,.0f}")
+                m4.metric("Emergency Fund", f"{emergency:,.0f}")
 
-            st.metric("Financial Score", f"{score}/100")
+                st.metric("Financial Score", f"{score}/100")
 
-            st.subheader("Analytics")
+                st.subheader("Analytics")
 
-            c1, c2 = st.columns(2)
-            with c1:
-                st.pyplot(income_allocation_pie(income, expenses, savings))
-            with c2:
-                st.pyplot(savings_bar_chart(savings))
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.pyplot(income_allocation_pie(income, expenses, savings))
+                with c2:
+                    st.pyplot(savings_bar_chart(savings))
 
-            st.plotly_chart(financial_health_gauge(score), use_container_width=True)
+                st.plotly_chart(financial_health_gauge(score), use_container_width=True)
 
-            st.subheader("AI Insights")
+                st.subheader("AI Insights")
 
-            data = {
-                "income": income,
-                "expenses": expenses,
-                "savings": savings,
-                "debt": debt,
-                "savings_ratio": savings_r,
-                "debt_ratio": debt_r,
-                "user_name": profile["name"],
-                "risk": profile["risk"],
-                "goal": profile["goal"]
-            }
+                data = {
+                    "income": income,
+                    "expenses": expenses,
+                    "savings": savings,
+                    "debt": debt,
+                    "savings_ratio": savings_r,
+                    "debt_ratio": debt_r,
+                    "user_name": profile["name"],
+                    "risk": profile["risk"],
+                    "goal": profile["goal"]
+                }
 
-            try:
-                advice = generate_financial_advice(data)
-            except Exception:
-                st.error("AI service unavailable. Try again later.")
-                advice = ""
-            sections = parse_advice(advice)
-            if not any(v.strip() for v in sections.values()):
-                st.error("AI response format issue. Retrying...")
-                advice = generate_financial_advice(data)
+                try:
+                    advice = generate_financial_advice(data)
+                except Exception:
+                    st.error("AI service unavailable. Try again later.")
+                    advice = ""
                 sections = parse_advice(advice)
-            for k, v in sections.items():
-                st.write(k)
-                st.info(v)
+                if not any(v.strip() for v in sections.values()):
+                    st.error("AI response format issue. Retrying...")
+                    advice = generate_financial_advice(data)
+                    sections = parse_advice(advice)
+                for k, v in sections.items():
+                    st.write(k)
+                    st.info(v)
 
-            # -------- PDF -------- #
-            metrics = {
-                "Savings Ratio": f"{savings_r:.2f}%",
-                "Debt Ratio": f"{debt_r:.2f}%",
-                "Score": f"{score}"
-            }
+                # -------- PDF -------- #
+                metrics = {
+                    "Savings Ratio": f"{savings_r:.2f}%",
+                    "Debt Ratio": f"{debt_r:.2f}%",
+                    "Score": f"{score}"
+                }
 
-            pdf_buffer = generate_pdf(profile, metrics, sections)
+                pdf_buffer = generate_pdf(profile, metrics, sections)
 
-            st.download_button(
-                label="Download PDF Report",
-                data=pdf_buffer,
-                file_name="FinAIzer_Report.pdf",
-                mime="application/pdf"
-            )
+                st.download_button(
+                    label="Download PDF Report",
+                    data=pdf_buffer,
+                    file_name="FinAIzer_Report.pdf",
+                    mime="application/pdf"
+                )
+                st.session_state.analyze_loading = False
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+
+        finally:
             st.session_state.analyze_loading = False
 
 
