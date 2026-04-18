@@ -1,0 +1,10 @@
+streamlit==1.35.0
+groq
+python-dotenv
+matplotlib
+seaborn
+plotly
+pandas
+firebase-admin
+requests
+reportlab
