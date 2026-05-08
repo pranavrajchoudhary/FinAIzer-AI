@@ -219,7 +219,7 @@ else:
 
 
 if not st.session_state.user:
-    st.title("FinAIzer | Login required")
+    st.title("FinAIzer | Login required - A project made under GFG X Google AI workshop")
     st.stop()
 
 
